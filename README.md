@@ -8,6 +8,7 @@ The -f flag switches to nicely formatted output
 
 ```
 dockerfile2json [-f] path/to/Dockerfile
+json2dockerfile path/to/JSON
 ```
 
 License

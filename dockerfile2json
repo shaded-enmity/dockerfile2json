@@ -1,0 +1,70 @@
+#!/bin/python -tt
+#vim: set fileencoding=utf-8 :
+
+import os, argparse, json, hashlib
+
+parser = argparse.ArgumentParser()
+parser.add_argument('dockerfile')
+parser.add_argument('--format', '-f', help='Output nicely formatted JSON', action='store_true')
+
+args = parser.parse_args()
+doformat = args.format
+dockerfile = args.dockerfile
+
+class Dockerfile(object):
+	def __init__(self, path):
+		self.path = path
+		with open(path) as fp:
+			lines = fp.readlines()
+			self.lines, self.digest = self.coalesce_lines(lines)
+		self.items = {}
+
+	def coalesce_lines(self, lines):
+		line, out_lines = '', []
+		sha = hashlib.sha256()
+
+		for ln in lines:
+			sha.update(ln)
+			if ln.strip() == '':
+				continue
+			continues = ln.endswith('\\\n') 
+			empty = line == ''
+
+			if continues:
+				line += ('' if empty else ' ') + ln[:-2].strip()
+			elif not empty:
+				out_lines.append(line + ' ' + ln.strip())
+				line = ''
+			else:
+				out_lines.append(ln.strip())
+
+		return out_lines, sha.hexdigest()
+
+
+	def parse(self):
+		keyvalues = ['ENV', 'LABEL', 'ONBUILD']
+		parsed = []
+
+		for line in self.lines:
+			parts = line.split(' ', 1)
+			cmd, arg0 = parts[0], parts[1]
+
+			if cmd in keyvalues:
+				key, value = arg0.split(' ', 1)
+				subdict = {'type': cmd, 'name': key, 'value': value}
+			else:
+				subdict = {'type': cmd, 'value': arg0}
+
+			parsed.append(subdict)
+
+		return {'dockerfile': self.path, 'hash': 'sha256:' + self.digest, 'commands': parsed}
+
+	def json(self):
+		if doformat:
+			return json.dumps(self.parse(), indent=4)
+		else:
+			return json.dumps(self.parse())
+
+if dockerfile:
+	df = Dockerfile(os.path.abspath(dockerfile))
+	print(df.json())

@@ -1,7 +1,7 @@
 #!/bin/python -tt
 #vim: set fileencoding=utf-8 :
 
-import os, argparse, json, hashlib
+import os, argparse, json, hashlib, shlex
 
 parser = argparse.ArgumentParser()
 parser.add_argument('dockerfile')
@@ -10,6 +10,10 @@ parser.add_argument('--format', '-f', help='Output nicely formatted JSON', actio
 args = parser.parse_args()
 doformat = args.format
 dockerfile = args.dockerfile
+
+def _split(text):
+	s = text.split('=', 1)
+	return (s[0], s[1])
 
 class Dockerfile(object):
 	def __init__(self, path):
@@ -40,9 +44,18 @@ class Dockerfile(object):
 
 		return out_lines, sha.hexdigest()
 
+	def parse_keyvalues(self, line):
+		split = shlex.split(line)
 
+		if len(split) == 1:
+			return [_split(line)]
+		elif len(split) == 2 and split[0].count('=') == 0:
+			return [(split[0], split[1])]
+		else:
+			return map(_split, split)
+		
 	def parse(self):
-		keyvalues = ['ENV', 'LABEL', 'ONBUILD']
+		keyvalues = ['ENV', 'LABEL']
 		parsed = []
 
 		for line in self.lines:
@@ -50,6 +63,10 @@ class Dockerfile(object):
 			cmd, arg0 = parts[0], parts[1]
 
 			if cmd in keyvalues:
+				for key, value in self.parse_keyvalues(arg0):
+					parsed.append({'type': cmd, 'name': key, 'value': value})
+				continue
+			elif cmd == 'ONBUILD':
 				key, value = arg0.split(' ', 1)
 				subdict = {'type': cmd, 'name': key, 'value': value}
 			else:

@@ -18,7 +18,7 @@ $ ./dockerfile2json Dockerfile | ./filter-value RUN | ./pkg-install
 yum -y install autoconf bzip2 gcc-c++ git libpqxx{,-devel} libtool libxml2{,-devel} libxslt{,-devel} make nodejs postgresql ruby{,-devel}
 ```
 
-Note that the original looked like:
+Note that the original `RUN` instruction looked like:
 
 ```
 RUN yum update -y\

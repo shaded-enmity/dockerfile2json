@@ -28,10 +28,11 @@ RUN yum update -y\
  && yum clean -y all
 ```
 
-In other words -- the pkg-install tool is capable of handling commands embedded within `&&`, `||` and `;`.
+In other words -- the `pkg-install` tool is capable of handling commands embedded within `&&`, `||` and `;`.
 The package list was stripped of any duplicate entries (`bzip2`) as well as sorted for better readability.
 Flags (`-y`) are preserved too, one limitation is that the parser doesn't know when the flag expects an 
 argument, therefore it is neccessary to to use `--variable=value` instead of `--variable value`.
+The tool recognizes `yum` and `dnf` install commands.
 
 License
 =======

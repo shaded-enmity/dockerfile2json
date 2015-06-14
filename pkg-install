@@ -1,0 +1,91 @@
+#!/bin/python -tt
+#vim: set fileencoding=utf-8 :
+
+import os, sys, json, shlex
+
+def read_stdin_lines():
+	txt = os.read(0, 4096)
+	full = ""
+	while txt != "":
+		full = full + txt
+		txt = os.read(0, 4096)
+	return full.splitlines()
+
+managers = ['yum', 'dnf']
+lines = read_stdin_lines()
+
+def shell_split(line):
+	cur, parts = [], []
+	for sc in line:
+		if sc in ["&&", "||", ";"]:
+			parts.append(cur)
+			cur=[]
+		else:
+			cur.append(sc)
+	if cur:
+		parts.append(cur)
+	return parts
+
+def find_install(it):
+	intermediary = []
+	cit = iter(it)
+	try:
+		i = next(cit)
+		if "install" == i.lower():
+			return (intermediary, cit)
+		else:
+			intermediary.append(i)	
+	except StopIteration:
+		pass
+
+	return None, None
+
+def find_manager(it):
+	cit = iter(it)
+	try:
+		i = next(cit)
+		if i in managers:
+			return cit
+	except StopIteration:
+		pass
+
+	return None
+
+def find_pkglist(it):
+	cit = iter(it)
+	flags = []
+	pkgs = []
+	try:
+		while True:
+			i = next(cit)
+			if i.startswith("-"):
+				flags.append(i)
+			else:
+				pkgs.append(i)
+	except StopIteration:
+		pass
+
+	return (flags, pkgs)
+
+def process_line(line):
+	piter = iter(line)
+
+	m = find_manager(piter)
+	if not m:
+		return (None, None)
+
+	flags, cit = find_install(m)	
+	if cit:
+		flgs, pkgs = find_pkglist(cit)
+		return (flgs + flags, pkgs)
+
+	return (None, None)
+
+for line in lines:
+	l = shlex.split(line)
+	for sub in shell_split(l):
+		flags, pkgs = process_line(sub)
+		if pkgs:
+			print "yum " + " ".join(flags) + " install " + " ".join(sorted(set(pkgs)))
+
+sys.exit(0)

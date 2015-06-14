@@ -1,0 +1,38 @@
+#!/bin/python -tt
+#vim: set fileencoding=utf-8 :
+
+import os, sys, json
+
+if len(sys.argv) != 2:
+	print("Supply a sub-command to filter by [RUN, FROM, ENV, LABEL ...]")
+	sys.exit(1)
+
+key = sys.argv[1]
+jsondoc = None
+
+def read_json():
+	with os.fdopen(0) as fd:
+		return json.load(fd)
+
+def filter_run(cmd):
+	''' Handle WORKDIR instruction as cd `{0}` '''
+	if c['type'] == "RUN":
+		print("{0}".format(c['value']))
+		return True
+	elif c['type'] == "WORKDIR":
+		print("cd {0}".format(c['value']))
+		return True
+	return False
+
+jsondoc = read_json()
+
+commands = jsondoc['commands']
+if commands:
+	for c in commands:
+		'''if not filter_run(c) and c['type'] == key:
+			print("{0}".format(c['value']))'''
+		if c['type'] == key:
+			print("{0}".format(c['value']))
+
+
+sys.exit(0)

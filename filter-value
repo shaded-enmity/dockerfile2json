@@ -25,13 +25,17 @@ def filter_run(cmd):
 	return False
 
 jsondoc = read_json()
+keyvalues = ['ENV', 'LABEL']
 
 commands = jsondoc['commands']
 if commands:
 	for c in commands:
 		'''if not filter_run(c) and c['type'] == key:
 			print("{0}".format(c['value']))'''
-		if c['type'] == key:
+
+		if c['type'] == key and key in keyvalues:
+			print("{0}={1}".format(c['name'], c['value']))
+		elif c['type'] == key:
 			print("{0}".format(c['value']))
 
 

@@ -1,0 +1,26 @@
+#!/bin/python -tt
+#vim: set fileencoding=utf-8 :
+
+import os, sys, json
+
+jsondoc = None
+def read_json():
+	with os.fdopen(0) as fd:
+		return json.load(fd)
+
+jsondoc = read_json()
+def group_same_instructions(insns):
+	r, l, x = [], None, []
+	for insn in insns:
+		if l and l['type'] != insn['type']:
+			r.append(x)
+			x = []
+		x.append(insn)
+		l = insn
+	return r
+
+commands = jsondoc['commands']
+if commands:
+	print json.dumps({'group': group_same_instructions(commands)}, indent=4)
+
+sys.exit(0)

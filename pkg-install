@@ -3,6 +3,8 @@
 
 import os, sys, json, shlex
 
+dumppkglist = len(sys.argv) == 2 and sys.argv[1] in ['-l', '--list']
+
 def read_stdin_lines():
 	txt = os.read(0, 4096)
 	full = ""
@@ -86,6 +88,9 @@ for line in lines:
 	for sub in shell_split(l):
 		flags, pkgs = process_line(sub)
 		if pkgs:
-			print "yum " + " ".join(flags) + " install " + " ".join(sorted(set(pkgs)))
+			if dumppkglist:
+				print " ".join(sorted(set(pkgs)))
+			else:
+				print "yum " + " ".join(flags) + " install " + " ".join(sorted(set(pkgs)))
 
 sys.exit(0)
